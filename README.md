@@ -34,9 +34,7 @@ kube-system   kube-scheduler-docker-for-desktop            1/1       Running   0
 Installing Istio:
 
 ```
-$ curl -L https://github.com/knative/serving/releases/download/v0.2.2/istio.yaml \
-| ->   | sed 's/LoadBalancer/NodePort/' \
-| ->   | kubectl apply --filename -
+$ curl -L https://github.com/knative/serving/releases/download/v0.2.2/istio.yaml | sed 's/LoadBalancer/NodePort/' | kubectl apply --filename -
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100   601    0   601    0     0   1747      0 --:--:-- --:--:-- --:--:--  1752
@@ -235,7 +233,7 @@ istio-telemetry-6b5579595f-nqn4q            2/2       Running   0          4m
 Installing Knative Serving
 
 ```
-$ curl -L https://github.com/knative/serving/releases/download/v0.2.2/release-lite.yaml \| ->   | kubectl apply --filename -
+$ curl -L https://github.com/knative/serving/releases/download/v0.2.2/release-lite.yaml | sed 's/LoadBalancer/NodePort/' | kubectl apply --filename -
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100   608    0   608    0     0   1489      0 --:--:-- --:--:-- --:--:--  1493
@@ -395,7 +393,7 @@ Interacting with app:
 $ INGRESSGATEWAY=knative-ingressgateway
 $ kubectl get svc $INGRESSGATEWAY --namespace istio-system
 NAME                     TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                                                                                                                   AGE
-knative-ingressgateway   LoadBalancer   10.107.234.251   <pending>     80:32380/TCP,443:32390/TCP,31400:32400/TCP,15011:31919/TCP,8060:30763/TCP,853:30198/TCP,15030:31652/TCP,15031:30108/TCP   7m
+knative-ingressgateway   NodePort   10.109.227.183   <none>        80:32380/TCP,443:32390/TCP,31400:32400/TCP,15011:30365/TCP,8060:30269/TCP,853:31143/TCP,15030:32612/TCP,15031:31104/TCP   1m
 $ export IP_ADDRESS=$(kubectl get node  --output 'jsonpath={.items[0].status.addresses[0].address}'):$(kubectl get svc $INGRESSGATEWAY --namespace istio-system   --output 'jsonpath={.spec.ports[?(@.port==80)].nodePort}')
 $ echo $IP_ADDRESS
 192.168.65.3:32380
@@ -404,6 +402,8 @@ NAME            DOMAIN
 helloworld-go   helloworld-go.default.example.com
 $ curl -H "Host: helloworld-go.default.example.com" http://${IP_ADDRESS}
 curl: (7) Failed to connect to 192.168.65.3 port 32380: Operation timed out
+$ curl -H "Host: helloworld-go.default.example.com" http://localhost:32380
+Hello Go Sample v1!
 ```
 
 Deleting Knative Serving:
@@ -685,6 +685,38 @@ NAME                     TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)   
 knative-ingressgateway   LoadBalancer   10.102.83.165   localhost     80:32380/TCP,443:32390/TCP,31400:32400/TCP,15011:30851/TCP,8060:31936/TCP,853:32165/TCP,15030:31050/TCP,15031:32471/TCP   6m
 ```
 
+## GitHub Source to Build
+
+```
+kubectl get secret
+NAME                  TYPE                                  DATA      AGE
+default-token-vrvgt   kubernetes.io/service-account-token   3         13m
+istio.default         istio.io/key-and-cert                 3         7m
+```
+
+```
+kubectl apply -f docker-secret.yaml
+secret "basic-user-pass" created
+
+kubectl get secret
+NAME                  TYPE                                  DATA      AGE
+basic-user-pass       kubernetes.io/basic-auth              2         4s
+default-token-vrvgt   kubernetes.io/service-account-token   3         14m
+istio.default         istio.io/key-and-cert                 3         8m
+
+kubectl apply -f service-account.yaml
+serviceaccount "build-bot" created
+
+kubectl get serviceaccount
+NAME        SECRETS   AGE
+build-bot   2         7s
+default     1         15m
+
+kubectl apply -f service.yaml
+service "app-from-source-123" created
+
+
+```
 
 References:
 
