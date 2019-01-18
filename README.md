@@ -403,6 +403,7 @@ $ kubectl get routes/helloworld-go --output=custom-columns=NAME:.metadata.name,D
 NAME            DOMAIN
 helloworld-go   helloworld-go.default.example.com
 $ curl -H "Host: helloworld-go.default.example.com" http://${IP_ADDRESS}
+curl: (7) Failed to connect to 192.168.65.3 port 32380: Operation timed out
 ```
 
 
